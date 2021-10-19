@@ -1,2 +1,2 @@
-#!/bin/bash
-cfn_nag -i ./ec2
+#!/usr/bin/sudo bash
+cfn_nag_scan -i ./ec2
