@@ -1,2 +1,2 @@
 #!/bin/bash
-cfn_nag --input-json-path ./ec2
+cfn_nag -i ./ec2
