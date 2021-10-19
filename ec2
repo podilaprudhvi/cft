@@ -384,7 +384,7 @@
                      "Ref":"SSHLocation"
                   }
                }
-            ]
+            ],
             "SecurityGroupEgress":[
                {
                   "CidrIp": "0.0.0.0/0",
