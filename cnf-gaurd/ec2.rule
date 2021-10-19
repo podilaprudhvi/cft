@@ -1,0 +1,22 @@
+#
+# For the 'Pod' document ensure that containers have resource limits set 
+# for memory
+#
+rule ensure_KeyName
+{
+    Resources.EC2Instance[*] 
+    {
+       Properties 
+       {
+            #
+            # Ensure that memory attribute is set
+            #
+            KeyName exists 
+            <<
+                Id: KeyName_REC_01
+                Description: KeyName no specified 
+            >>
+        }
+   }
+
+}
