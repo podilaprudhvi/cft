@@ -1,0 +1,338 @@
+#  Created date: 6/1
+#  Created by Yeh Cheng
+#  Version: v0.1
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Create the EMR cluster base on the parameter provided. This solution is for the datalake in Service Prognostics. 
+Parameters:
+  EC2KeyPairName:
+    Description: Public/private key pairs allow you to securely connect to your instance
+      after it launches
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: emr-datasvc
+  SubnetID:
+    Description: ID of the public subnet 1 that you want to provision the first Remote
+      Desktop Gateway into (e.g., subnet-a0246dcd)
+    Type: AWS::EC2::Subnet::Id
+  NumberOfMasterInstances:
+    Type: String
+    Default: 1
+    Description: Number of Master Instances
+  MasterStorageSize:
+    Type: String
+    Default: 100
+    Description: EBS Storage Size for Master node
+  NumberOfCoreInstances:
+    Type: String
+    Default: 2
+    Description: Number of Core Instances
+  CoreStorageSize:
+    Type: String
+    Default: 100
+    Description: EBS Storage Size for Core node
+  EMRClusterName:
+    Type: String
+    Default: "test-automation"
+    Description: EMR Cluster Name
+
+  EMRReleaseLabel:
+    Type: String
+    Default: "emr-6.1.1"
+    Description: EMR version
+  EMREBSVolSize:
+    Type: String
+    Default: 100
+    Description: EMR default storage size
+
+  MasterInstanceType:
+    AllowedValues:
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
+      - m4.16xlarge
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+      - m5.8xlarge
+      - m5.12xlarge
+      - m5.16xlarge
+      - m5.24xlarge
+      - c5.xlarge
+      - c5.2xlarge
+      - c5.4xlarge
+      - c5.9xlarge
+      - c5.12xlarge
+      - c5.18xlarge
+      - c5.24xlarge
+      - c5d.xlarge
+      - c5d.2xlarge
+      - c5d.4xlarge
+      - c5d.9xlarge
+      - c5d.18xlarge
+      - c5n.xlarge
+      - c5n.2xlarge
+      - c5n.4xlarge
+      - c5n.9xlarge
+      - c5n.18xlarge
+    ConstraintDescription: must be a valid EC2 instance type.
+    Default: m5.xlarge
+    Description: EC2 instance type
+    Type: String
+  CoreInstanceType:
+    AllowedValues:
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
+      - m4.16xlarge
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+      - m5.8xlarge
+      - m5.12xlarge
+      - m5.16xlarge
+      - m5.24xlarge
+      - c5.xlarge
+      - c5.2xlarge
+      - c5.4xlarge
+      - c5.9xlarge
+      - c5.12xlarge
+      - c5.18xlarge
+      - c5.24xlarge
+      - c5d.xlarge
+      - c5d.2xlarge
+      - c5d.4xlarge
+      - c5d.9xlarge
+      - c5d.18xlarge
+      - c5n.xlarge
+      - c5n.2xlarge
+      - c5n.4xlarge
+      - c5n.9xlarge
+      - c5n.18xlarge
+    ConstraintDescription: must be a valid EC2 instance type.
+    Default: m5.xlarge
+    Description: EC2 instance type
+    Type: String
+
+  S3ConfigBucket:
+    Type: String
+    Default: datasvc-dev-config-zone
+    Description: S3 bucket name
+  S3ConfigBootstrap:
+    Type: String
+    Default: /emr/install_libraries_bootstrap.bash
+    Description: Path on S3
+  S3LogsBucket:
+    Type: String
+    Default: datasvc-dev-logging
+    Description: S3 bucket name with path
+
+  TagPRNumber:
+    Type: String
+    Default: PR06707
+    Description: Honda PR code
+  TagEnvironment:
+    Type: String
+    Description: Tag for Cluster environment
+    AllowedValues:
+      - Dev
+      - QA
+      - Prod
+
+  InitialTaskSize:
+    Type: String
+    Default: 2
+    Description: Number of Task Instances
+  TaskStorageSize:
+    Type: String
+    Default: 100
+    Description: EBS Storage Size for Task node
+
+  TaskInstanceType:
+    AllowedValues:
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
+      - m4.16xlarge
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+      - m5.8xlarge
+      - m5.12xlarge
+      - m5.16xlarge
+      - m5.24xlarge
+      - c5.xlarge
+      - c5.2xlarge
+      - c5.4xlarge
+      - c5.9xlarge
+      - c5.12xlarge
+      - c5.18xlarge
+      - c5.24xlarge
+      - c5d.xlarge
+      - c5d.2xlarge
+      - c5d.4xlarge
+      - c5d.9xlarge
+      - c5d.18xlarge
+      - c5n.xlarge
+      - c5n.2xlarge
+      - c5n.4xlarge
+      - c5n.9xlarge
+      - c5n.18xlarge
+    ConstraintDescription: must be a valid EC2 instance type.
+    Default: m5.2xlarge
+    Description: EC2 instance type
+    Type: String
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Amazon EC2 Configuration
+        Parameters:
+          - EC2KeyPairName
+      - Label:
+          default: EMR Config
+        Parameters:
+          - EMRClusterName
+          - EMRReleaseLabel
+          - EMREBSVolSize
+          - SubnetID
+      - Label:
+          default: EMR Master/Core Node configuration
+        Parameters:
+          - NumberOfMasterInstances
+          - MasterInstanceType
+          - MasterStorageSize
+          - NumberOfCoreInstances
+          - CoreInstanceType
+          - CoreStorageSize
+      - Label:
+          default: S3 bucket information
+        Parameters:
+          - S3LogsBucket
+          - S3ConfigBucket
+          - S3ConfigBootstrap
+      - Label:
+          default: Tags for EMR Clusters
+        Parameters:
+          - TagPRNumber
+          - TagEnvironment
+      - Label:
+          default: EMR Task Node configuration
+        Parameters:
+          - InitialTaskSize
+          - TaskInstanceType
+          - TaskStorageSize
+
+Resources:
+
+  # Main EMR Clusters (Master and Core)
+  EMRCluster:
+    Type: AWS::EMR::Cluster
+    Properties:
+      Applications:
+      - Name: Spark
+      - Name: Hadoop
+      - Name: JupyterHub
+      - Name: Hive
+      - Name: Tez
+      - Name: Hue
+      Instances:
+        Ec2KeyName: !Ref EC2KeyPairName
+        Ec2SubnetId: !Ref SubnetID
+        EmrManagedMasterSecurityGroup: !ImportValue SGEMRMaster
+        EmrManagedSlaveSecurityGroup: !ImportValue SGEMRSlave
+        ServiceAccessSecurityGroup: !ImportValue SGEMRService
+        AdditionalMasterSecurityGroups:
+          - !ImportValue SGEMRService
+          - !ImportValue SGEMRSSHHTTPS
+        AdditionalSlaveSecurityGroups:
+          - !ImportValue SGEMRService
+          - !ImportValue SGEMRSSHHTTPS
+        KeepJobFlowAliveWhenNoSteps: true
+        MasterInstanceGroup:
+          InstanceCount: !Ref NumberOfMasterInstances
+          InstanceType: !Ref MasterInstanceType
+          Market: ON_DEMAND
+          Name: Master
+          EbsConfiguration:
+            EbsBlockDeviceConfigs:
+              - VolumeSpecification:
+                  SizeInGB: !Ref MasterStorageSize
+                  VolumeType: gp2
+                VolumesPerInstance: 1
+            EbsOptimized: true
+# Need more info for the rules...
+#          AutoScalingPolicy:
+#              Constraints:
+#                MinCapacity: 1
+#                MaxCapacity: !Ref MaxCoreSize
+#              Rules:
+
+        CoreInstanceGroup:
+          InstanceCount: !Ref NumberOfCoreInstances
+          InstanceType: !Ref CoreInstanceType
+          Market: ON_DEMAND
+          Name: Core
+          EbsConfiguration:
+            EbsBlockDeviceConfigs:
+              - VolumeSpecification:
+                  SizeInGB: !Ref CoreStorageSize
+                  VolumeType: gp2
+                VolumesPerInstance: 1
+            EbsOptimized: true
+        TerminationProtected: false
+      VisibleToAllUsers: true
+      Name: !Sub "${AWS::StackName}-${EMRClusterName}" #This name can be changed
+      ReleaseLabel: !Ref EMRReleaseLabel
+      EbsRootVolumeSize: !Ref EMREBSVolSize
+      JobFlowRole: !ImportValue IAMEMREC2InstanceProfile
+      AutoScalingRole: !ImportValue IAMEMRAutoScalingRole
+      ServiceRole: !ImportValue IAMEMRRole
+      StepConcurrencyLevel: 5
+      ScaleDownBehavior: TERMINATE_AT_TASK_COMPLETION
+      VisibleToAllUsers: true
+      ManagedScalingPolicy: 
+        ComputeLimits:
+            MaximumCapacityUnits: 7
+            MaximumCoreCapacityUnits: 2
+            MaximumOnDemandCapacityUnits: 7
+            MinimumCapacityUnits: 2
+            UnitType: Instances
+      BootstrapActions:
+        - Name: BootstrapInstall
+          ScriptBootstrapAction:
+              Path: !Sub s3://${S3ConfigBucket}${S3ConfigBootstrap}
+
+# Task Nodes
+  TaskInstanceGroupConfig:
+    Type: AWS::EMR::InstanceGroupConfig
+    Properties:
+      Name: TaskInstance
+      InstanceRole: TASK
+      JobFlowId: !Ref EMRCluster #EMR ID
+      InstanceCount: !Ref InitialTaskSize
+      InstanceType: !Ref TaskInstanceType
+      Market: ON_DEMAND
+
+      EbsConfiguration:
+        EbsBlockDeviceConfigs:
+            - VolumeSpecification:
+                  SizeInGB: !Ref TaskStorageSize
+                  VolumeType: gp2
+              VolumesPerInstance: 1
+        EbsOptimized: true
+
+Outputs:
+  ClusterId:
+    Value: !Ref EMRCluster
+    Description: The ID of the EMR Cluster
+    #Export:
+    #  Name: !Sub "${AWS::StackName}-${EMRClusterName}"
+    # Will need to export it out if we want to split the task instance group config
