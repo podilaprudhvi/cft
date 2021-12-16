@@ -1,0 +1,26 @@
+let aws_emr_cluster_resources = Resources.*[ Type == 'AWS::EMR::Cluster' ]
+rule aws_emr_cluster when %aws_emr_cluster_resources !empty {
+  %aws_emr_cluster_resources.Properties.AutoScalingRole == "IAMEMRAutoScalingRole"
+  %aws_emr_cluster_resources.Properties.ReleaseLabel == "EMRReleaseLabel"
+  %aws_emr_cluster_resources.Properties.ServiceRole == "IAMEMRRole"
+  %aws_emr_cluster_resources.Properties.Name == "${AWS::StackName}-${EMRClusterName}"
+  %aws_emr_cluster_resources.Properties.VisibleToAllUsers == true
+  %aws_emr_cluster_resources.Properties.EbsRootVolumeSize == "EMREBSVolSize"
+  %aws_emr_cluster_resources.Properties.ManagedScalingPolicy == {"ComputeLimits":{"MaximumCapacityUnits":7,"MaximumCoreCapacityUnits":2,"MaximumOnDemandCapacityUnits":7,"MinimumCapacityUnits":2,"UnitType":"Instances"}}
+  %aws_emr_cluster_resources.Properties.JobFlowRole == "IAMEMREC2InstanceProfile"
+  %aws_emr_cluster_resources.Properties.BootstrapActions == [{"Name":"BootstrapInstall","ScriptBootstrapAction":{"Path":"s3://${S3ConfigBucket}${S3ConfigBootstrap}"}}]
+  %aws_emr_cluster_resources.Properties.Applications == [{"Name":"Spark"},{"Name":"Hadoop"},{"Name":"JupyterHub"},{"Name":"Hive"},{"Name":"Tez"},{"Name":"Hue"}]
+  %aws_emr_cluster_resources.Properties.ScaleDownBehavior == "TERMINATE_AT_TASK_COMPLETION"
+  %aws_emr_cluster_resources.Properties.StepConcurrencyLevel == 5
+  %aws_emr_cluster_resources.Properties.Instances == {"Ec2KeyName":"EC2KeyPairName","Ec2SubnetId":"SubnetID","EmrManagedMasterSecurityGroup":"SGEMRMaster","EmrManagedSlaveSecurityGroup":"SGEMRSlave","ServiceAccessSecurityGroup":"SGEMRService","AdditionalMasterSecurityGroups":["SGEMRService","SGEMRSSHHTTPS"],"AdditionalSlaveSecurityGroups":["SGEMRService","SGEMRSSHHTTPS"],"KeepJobFlowAliveWhenNoSteps":true,"MasterInstanceGroup":{"InstanceCount":"NumberOfMasterInstances","InstanceType":"MasterInstanceType","Market":"ON_DEMAND","Name":"Master","EbsConfiguration":{"EbsBlockDeviceConfigs":[{"VolumeSpecification":{"SizeInGB":"MasterStorageSize","VolumeType":"gp2"},"VolumesPerInstance":1}],"EbsOptimized":true}},"CoreInstanceGroup":{"InstanceCount":"NumberOfCoreInstances","InstanceType":"CoreInstanceType","Market":"ON_DEMAND","Name":"Core","EbsConfiguration":{"EbsBlockDeviceConfigs":[{"VolumeSpecification":{"SizeInGB":"CoreStorageSize","VolumeType":"gp2"},"VolumesPerInstance":1}],"EbsOptimized":true}},"TerminationProtected":false}
+}
+let aws_emr_instancegroupconfig_resources = Resources.*[ Type == 'AWS::EMR::InstanceGroupConfig' ]
+rule aws_emr_instancegroupconfig when %aws_emr_instancegroupconfig_resources !empty {
+  %aws_emr_instancegroupconfig_resources.Properties.Market == "ON_DEMAND"
+  %aws_emr_instancegroupconfig_resources.Properties.Name == "TaskInstance"
+  %aws_emr_instancegroupconfig_resources.Properties.JobFlowId == "EMRCluster"
+  %aws_emr_instancegroupconfig_resources.Properties.InstanceCount == "InitialTaskSize"
+  %aws_emr_instancegroupconfig_resources.Properties.InstanceType == "TaskInstanceType"
+  %aws_emr_instancegroupconfig_resources.Properties.InstanceRole == "TASK"
+  %aws_emr_instancegroupconfig_resources.Properties.EbsConfiguration == {"EbsBlockDeviceConfigs":[{"VolumeSpecification":{"SizeInGB":"TaskStorageSize","VolumeType":"gp2"},"VolumesPerInstance":1}],"EbsOptimized":true}
+}
