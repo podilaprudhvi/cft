@@ -1,0 +1,13 @@
+let aws_ec2_instance_resources = Resources.*[ Type == 'AWS::EC2::Instance' ]
+rule aws_ec2_instance when %aws_ec2_instance_resources !empty {
+  %aws_ec2_instance_resources.Properties.SubnetId == {"Ref":"SubnetPool"}
+  %aws_ec2_instance_resources.Properties.ImageId == {"Fn::FindInMap":["AWSRegionArch2AMI",{"Ref":"AWS::Region"},{"Fn::FindInMap":["AWSInstanceType2Arch",{"Ref":"InstanceType"},"Arch"]}]}
+  %aws_ec2_instance_resources.Properties.KeyName == {"Ref":"KeyName"}
+  %aws_ec2_instance_resources.Properties.InstanceType == {"Ref":"InstanceType"}
+}
+let aws_ec2_securitygroup_resources = Resources.*[ Type == 'AWS::EC2::SecurityGroup' ]
+rule aws_ec2_securitygroup when %aws_ec2_securitygroup_resources !empty {
+  %aws_ec2_securitygroup_resources.Properties.GroupDescription == "Enable SSH access via port 22"
+  %aws_ec2_securitygroup_resources.Properties.SecurityGroupIngress == [{"CidrIp":{"Ref":"SSHLocation"},"IpProtocol":"tcp","FromPort":"22","ToPort":"22"}]
+  %aws_ec2_securitygroup_resources.Properties.SecurityGroupEgress == [{"CidrIp":{"Ref":"SSHLocation"},"IpProtocol":"tcp","FromPort":"22","ToPort":"22"}]
+}
